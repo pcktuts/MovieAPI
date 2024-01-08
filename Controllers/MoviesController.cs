@@ -41,5 +41,52 @@ namespace MovieAPI.Controllers
             await _dbContext.SaveChangesAsync();
             return Ok(movie);
         }
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateMovie(int id, Movie movie)
+        {
+            if(id != movie.Id)
+            {
+                return BadRequest();
+            }
+            _dbContext.Entry(movie).State = EntityState.Modified;
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!MovieExist(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
+
+        }
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteMovie(int id)
+        {
+            if(_dbContext.Movies == null)
+            {
+                return NotFound();
+            }
+            var movie = await _dbContext.Movies.FindAsync(id);
+            if(movie == null)
+            { 
+                return NotFound();
+            }
+            _dbContext.Movies.Remove(movie);
+            await _dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private bool MovieExist(long id)
+        {
+           return (_dbContext.Movies?.Any(e => e.Id == id)).GetValueOrDefault();    
+        }
     }
 }
